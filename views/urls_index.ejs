@@ -15,28 +15,25 @@
 <%-include('partials/_header') %>
 
 <body>
-  <h2>My URLs</h2>
-  <table class="table">
-    <thead>
-      <tr>
-        <th scope="col">Short URl</th>
-        <th scope="col">Long URL</th>
-      </tr>
-    </thead>
-    <tbody>
-      <% for(const url in urls) { %>
+  <main style="margin: 1em;">
+    <h3>My URLs</h3>
+    <table class="table">
+      <thead>
         <tr>
-          <td>
-            <% url %>
-          </td>
-          <td>
-            <% urls[url]%>
-          </td>
+          <th scope="col">Short URL</th>
+          <th scope="col">Long URL</th>
         </tr>
+      </thead>
+      <tbody>
+        <% for(let url in urls) { %>
+          <tr>
+            <td><%= url %></td>
+            <td><%= urls[url] %></td>
+          </tr>
         <% } %>
-    </tbody>
-  </table>
-
+      </tbody>
+    </table>
+  </main>
 
   <!-- Bootstrap 3 -->
   <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"

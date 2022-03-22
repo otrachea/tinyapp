@@ -49,10 +49,7 @@ app.get("/u/:shortURL", (req, res) => {
 });
 
 app.post("/urls/:shortURL", (req, res) => {
-  res.redirect(`/urls/${req.params.shortURL}`);
-});
-
-app.post("/urls/:shortURL/edit", (req, res) => {
+  console.log(req.params.shortURL, req.body.newLongURL)
   urlDatabase[req.params.shortURL] = req.body.newLongURL;
   res.redirect(`/urls/${req.params.shortURL}`);
 });

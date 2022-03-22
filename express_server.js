@@ -26,7 +26,6 @@ app.get("/hello", (req, res) => {
 
 app.get("/urls", (req, res) => {
   const templateVars = { urls: urlDatabase };
-  console.log(urlDatabase);
   res.render("urls_index", templateVars);
 });
 
@@ -35,8 +34,6 @@ app.get("/urls/new", (req, res) => {
 });
 
 app.get("/urls/:shortURL", (req, res) => {
-  // console.log(req);
-  console.log(req.params);
   const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL] };
   res.render("urls_show", templateVars);
 });
@@ -44,7 +41,6 @@ app.get("/urls/:shortURL", (req, res) => {
 app.post("/urls", (req, res) => {
   let short = generateRandomString();
   urlDatabase[short] = req.body.longURL;
-  console.log(urlDatabase);
   res.redirect(`/urls/${short}`);
 });
 
@@ -58,11 +54,12 @@ app.listen(PORT, () => {
 
 
 function generateRandomString() {
-  let alpha = "abcdefghijklmnopqrsztuvwyz0123456789";
+  let alpha = "abcdefghijklmnopqrsztuvwyz";
+  alpha += alpha.toUpperCase() + "0123456789";
   let result = "";
 
   for (let i = 0; i < 6; i++) {
-    result += alpha[Math.floor(Math.random() * 36)]
+    result += alpha[Math.floor(Math.random() * 52)];
   }
 
   return result;

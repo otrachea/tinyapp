@@ -15,7 +15,11 @@ const urlDatabase = {
   "9sm5xK": "http://www.google.com"
 };
 
-const users = {};
+const users = { '1': {
+  userID: "1",
+  email: "test@test.com",
+  password: "test"
+}};
 
 app.get("/", (req, res) => {
   res.redirect("/urls");
@@ -25,41 +29,13 @@ app.get("/urls.json", (req, res) => {
   res.json(urlDatabase);
 });
 
-app.get("/hello", (req, res) => {
-  res.send("<html><body>Hello <b>World</b></body></html>\n");
-});
 
 app.get("/urls", (req, res) => {
   const templateVars = {
     urls: urlDatabase,
-    username: req.cookies["username"]
+    user: users[req.cookies["userID"]]
   };
   res.render("urls_index", templateVars);
-});
-
-app.get("/urls/new", (req, res) => {
-  const templateVars = { username: req.cookies["username"] };
-  res.render("urls_new", templateVars);
-});
-
-app.get("/urls/:shortURL", (req, res) => {
-  const templateVars = {
-    shortURL: req.params.shortURL,
-    longURL: urlDatabase[req.params.shortURL],
-    username: req.cookies["username"]
-  };
-  res.render("urls_show", templateVars);
-});
-
-app.get("/register", (req, res) => {
-  const templateVars = {
-    username: req.cookies["username"]
-  }
-  res.render("register", templateVars);
-})
-
-app.get("/u/:shortURL", (req, res) => {
-  res.redirect(urlDatabase[req.params.shortURL]);
 });
 
 app.post("/urls", (req, res) => {
@@ -68,10 +44,41 @@ app.post("/urls", (req, res) => {
   res.redirect(`/urls/${short}`);
 });
 
+
+app.get("/urls/new", (req, res) => {
+  const templateVars = { userID: req.cookies["userID"] };
+  res.render("urls_new", templateVars);
+});
+
+
+app.get("/urls/:shortURL", (req, res) => {
+  const templateVars = {
+    shortURL: req.params.shortURL,
+    longURL: urlDatabase[req.params.shortURL],
+    user: users[req.cookies["userID"]]
+  };
+  res.render("urls_show", templateVars);
+});
+
 app.post("/urls/:shortURL", (req, res) => {
   urlDatabase[req.params.shortURL] = req.body.newLongURL;
   res.redirect(`/urls/${req.params.shortURL}`);
 });
+
+
+app.get("/register", (req, res) => {
+  const templateVars = {
+    user: users[req.cookies["userID"]]
+  }
+  res.render("register", templateVars);
+})
+
+app.post("/register", (req, res) => {
+  let userID = generateRandomString();
+  users[userID] = { id: userID, email: req.body.email, password: req.body.password };
+  res.cookie("userID", userID).redirect("/urls");
+});
+
 
 app.post("/urls/:shortURL/delete", (req, res) => {
   delete urlDatabase[req.params.shortURL];
@@ -79,21 +86,16 @@ app.post("/urls/:shortURL/delete", (req, res) => {
 });
 
 app.post("/login", (req, res) => {
-  if (!("username" in req.cookies) && req.body.username) {
-    res.cookie("username", req.body.username);
+  if (!("email" in req.cookies) && req.body.email) {
+    res.cookie("email", req.body.email);
   }
   res.redirect("/urls");
 });
 
 app.post("/logout", (req, res) => {
-  res.clearCookie("username").redirect("/urls");
+  res.clearCookie("userID").redirect("/urls");
 });
 
-app.post("/register", (req, res) => {
-  let userID = generateRandomString();
-  users[userID] = { id: userID, email: req.body.email, password: req.body.password };
-  res.cookie("username", userID).redirect("/urls");
-});
 
 app.listen(PORT, () => {
   console.log(`TinyApp listening on port ${PORT}`);

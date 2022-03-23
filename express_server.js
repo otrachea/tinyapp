@@ -15,11 +15,13 @@ const urlDatabase = {
   "9sm5xK": "http://www.google.com"
 };
 
-const users = { '1': {
-  userID: "1",
-  email: "test@test.com",
-  password: "test"
-}};
+const users = {
+  '1': {
+    userID: "1",
+    email: "fdsa@gmail.com",
+    password: "test"
+  }
+};
 
 app.get("/", (req, res) => {
   res.redirect("/urls");
@@ -82,11 +84,16 @@ app.post("/register", (req, res) => {
     return res.send("Error 400: Cannot have empty email");
   }
 
+  if (emailLookup(users, req.body.email)) {
+    res.statusCode = 400;
+    return res.send("Error 400: Email already registered");
+  }
+
   if (!req.body.password) {
     res.statusCode = 400;
     return res.send("Error 400: Cannot have empty password");
   }
-  
+
   let userID = generateRandomString();
   users[userID] = { id: userID, email: req.body.email, password: req.body.password };
   res.cookie("userID", userID).redirect("/urls");
@@ -125,4 +132,13 @@ function generateRandomString() {
   }
 
   return result;
+}
+
+function emailLookup(users, email) {
+  for (const user of Object.values(users)) {
+    if (user.email === email) {
+      return true;
+    }
+  }
+  return false;
 }

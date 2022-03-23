@@ -3,6 +3,8 @@ const app = express();
 const PORT = 8080; // default port 8080
 
 const { generateRandomString, emailLookup, urlsForUser } = require("./helpers");
+const { urlDatabase } = require("./data/urlDB");
+const { users } = require("./data/userDB");
 
 app.use(express.static("public"));
 app.set("view engine", "ejs");
@@ -10,30 +12,6 @@ app.set("view engine", "ejs");
 const bodyParser = require("body-parser");
 const cookieParser = require("cookie-parser");
 app.use(bodyParser.urlencoded({ extended: true }), cookieParser());
-
-const urlDatabase = {
-  "b2xVn2": {
-    longURL: "http://www.lighthouselabs.ca",
-    userID: "aJ48lW"
-  },
-  "9sm5xK": {
-    longURL: "http://www.google.com",
-    userID: "aJ48lW"
-  }
-};
-
-const users = {
-  'aJ48lW': {
-    userID: "aJ48lW",
-    email: "fdsa@gmail.com",
-    password: "test"
-  },
-  'zusVIt': {
-    userID: 'zusVIt',
-    email: "test@test.com",
-    password: "a"
-  }
-};
 
 app.get("/", (req, res) => {
   res.redirect("/urls");
@@ -45,7 +23,7 @@ app.get("/urls.json", (req, res) => {
 
 app.get("/u/:shortURL", (req, res) => {
   if (!(req.params.shortURL in urlDatabase)) {
-    res.statusCode = 404;
+    res.statusCode = 400;
     return res.send(`Error ${res.statusCode}: ${req.params.shortURL} does not exist as a shortURL`);
   }
   res.redirect(urlDatabase[req.params.shortURL].longURL);
@@ -71,7 +49,7 @@ app.get("/urls", (req, res) => {
 // ----------- CREATES NEW URL -------------------
 app.post("/urls", (req, res) => {
   if (!("userID" in req.cookies)) {
-    res.statusCode = 400;
+    res.statusCode = 403;
     return res.send(`Error ${res.statusCode}: Only logged in users can create new urls`);
   }
   let short = generateRandomString();
@@ -113,6 +91,21 @@ app.get("/urls/:shortURL", (req, res) => {
 
 // ------------ EDITS EXISTING SHORT ------------------
 app.post("/urls/:shortURL", (req, res) => {
+  // user not logged in
+  if (!("userID" in req.cookies)) {
+    return res.redirect("/login");
+  }
+
+  // shortURL not in database
+  if (!(req.params.shortURL in urlDatabase)) {
+    return res.redirect("/urls");
+  }
+
+  // shortURL does not belong to the logged in user
+  if (req.cookies.userID !== urlDatabase[req.params.shortURL].userID) {
+    return res.redirect("/urls");
+  }
+
   urlDatabase[req.params.shortURL].longURL = req.body.newLongURL;
   res.redirect(`/urls/${req.params.shortURL}`);
 });
@@ -151,6 +144,20 @@ app.post("/register", (req, res) => {
 
 // ---------- DELETING URLS -------------
 app.post("/urls/:shortURL/delete", (req, res) => {
+  // user not logged in
+  if (!("userID" in req.cookies)) {
+    return res.redirect("/login");
+  }
+
+  // shortURL not in database
+  if (!(req.params.shortURL in urlDatabase)) {
+    return res.redirect("/urls");
+  }
+
+  // shortURL does not belong to the logged in user
+  if (req.cookies.userID !== urlDatabase[req.params.shortURL].userID) {
+    return res.redirect("/urls");
+  }
   delete urlDatabase[req.params.shortURL];
   res.redirect("/urls")
 });

@@ -5,7 +5,6 @@ const PORT = 8080; // default port 8080
 const { generateRandomString, emailLookup } = require("./helpers");
 
 app.use(express.static("public"));
-// app.use(experss.urlencoded({ extended: false }));
 app.set("view engine", "ejs");
 
 const bodyParser = require("body-parser");
@@ -13,13 +12,19 @@ const cookieParser = require("cookie-parser");
 app.use(bodyParser.urlencoded({ extended: true }), cookieParser());
 
 const urlDatabase = {
-  "b2xVn2": "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com"
+  "b2xVn2": {
+    longURL: "http://www.lighthouselabs.ca",
+    userID: "aJ48lW"
+  },
+  "9sm5xK": {
+    longURL: "http://www.google.com",
+    userID: "aJ48lW"
+  }
 };
 
 const users = {
-  '1': {
-    userID: "1",
+  'aJ48lW': {
+    userID: "aJ48lW",
     email: "fdsa@gmail.com",
     password: "test"
   }
@@ -42,36 +47,46 @@ app.get("/urls", (req, res) => {
   res.render("urls_index", templateVars);
 });
 
+// ----------- CREATES NEW URL -------------------
 app.post("/urls", (req, res) => {
+  if (!("userID" in req.cookies)) {
+    res.statusCode = 400;
+    return res.send(`Error ${res.statusCode}: Only logged in users can create new urls`);
+  }
   let short = generateRandomString();
-  urlDatabase[short] = req.body.longURL;
+  urlDatabase[short] = { longURL: req.body.longURL, userID: req.cookies.userID };
   res.redirect(`/urls/${short}`);
 });
 
-// ------------ CREATE NEW SHORT URL --------------
+// ------------ GETS NEW SHORTURL PAGE --------------
 app.get("/urls/new", (req, res) => {
+  if (!("userID" in req.cookies)) {
+    return res.redirect("/login");
+  }
   const templateVars = { user: users[req.cookies["userID"]] };
   res.render("urls_new", templateVars);
 });
 
-// ----------- PAGE FOR EACH SHORT URL ----------------
+// ----------- GETS PAGE FOR EACH SHORT URL ----------------
 app.get("/urls/:shortURL", (req, res) => {
   const templateVars = {
     shortURL: req.params.shortURL,
-    longURL: urlDatabase[req.params.shortURL],
+    longURL: urlDatabase[req.params.shortURL].longURL,
     user: users[req.cookies["userID"]]
   };
   res.render("urls_show", templateVars);
 });
 
+
+// ------------ EDITS EXISTING SHORT ------------------
 app.post("/urls/:shortURL", (req, res) => {
-  urlDatabase[req.params.shortURL] = req.body.newLongURL;
+  urlDatabase[req.params.shortURL].longURL = req.body.newLongURL;
   res.redirect(`/urls/${req.params.shortURL}`);
 });
 
 // ---------- REGISTRATION---------------
 app.get("/register", (req, res) => {
-  if (req.cookies["userID"]) {
+  if ("userID" in req.cookies) {
     return res.redirect("/urls");
   }
   const templateVars = {
@@ -83,17 +98,17 @@ app.get("/register", (req, res) => {
 app.post("/register", (req, res) => {
   if (!req.body.email) {
     res.statusCode = 400;
-    return res.send("Error 400: Cannot have empty email");
+    return res.send(`Error ${res.statusCode}: Cannot have empty email`);
   }
 
   if (emailLookup(users, req.body.email)) {
     res.statusCode = 400;
-    return res.send("Error 400: Email already registered");
+    return res.send(`Error ${res.statusCode}: Email already registered`);
   }
 
   if (!req.body.password) {
     res.statusCode = 400;
-    return res.send("Error 400: Cannot have empty password");
+    return res.send(`Error ${res.statusCode}: Cannot have empty password`);
   }
 
   let userID = generateRandomString();
@@ -110,7 +125,7 @@ app.post("/urls/:shortURL/delete", (req, res) => {
 
 // -------------- LOGIN -------------------
 app.get("/login", (req, res) => {
-  if (req.cookies["userID"]) {
+  if ("userID" in req.cookies) {
     return res.redirect("/urls");
   }
   const templateVars = {
@@ -122,12 +137,12 @@ app.get("/login", (req, res) => {
 app.post("/login", (req, res) => {
   if (!req.body.email) {
     res.statusCode = 400;
-    return res.send("Error 400: Cannot have empty email");
+    return res.send(`Error ${res.statusCode}: Cannot have empty email`);
   }
 
   if (!req.body.password) {
     res.statusCode = 400;
-    return res.send("Error 400: Cannot have empty password");
+    return res.send(`Error ${res.statusCode}: Cannot have empty password`);
   }
 
   let user = emailLookup(users, req.body.email);
@@ -138,11 +153,11 @@ app.post("/login", (req, res) => {
 
     // incorrect password
     res.statusCode = 403;
-    return res.send("Error 403: Incorrect password");
+    return res.send(`Error ${res.statusCode}: Incorrect password`);
   }
 
   res.statusCode = 403;
-  return res.send("Error 403: Email not found");
+  return res.send(`Error ${res.statusCode}: Email not found`);
 
 });
 

@@ -10,7 +10,9 @@ const urlDatabase = {
 };
 
 const bodyParser = require("body-parser");
-app.use(bodyParser.urlencoded({ extended: true }));
+const cookieParser = require("cookie-parser");
+app.use(bodyParser.urlencoded({ extended: true }), cookieParser());
+
 
 app.get("/", (req, res) => {
   res.send("Hello!");
@@ -25,7 +27,10 @@ app.get("/hello", (req, res) => {
 });
 
 app.get("/urls", (req, res) => {
-  const templateVars = { urls: urlDatabase };
+  const templateVars = {
+    urls: urlDatabase,
+    username: req.cookies["username"]
+  };
   res.render("urls_index", templateVars);
 });
 
@@ -56,6 +61,24 @@ app.post("/urls/:shortURL", (req, res) => {
 app.post("/urls/:shortURL/delete", (req, res) => {
   delete urlDatabase[req.params.shortURL];
   res.redirect("/urls")
+});
+
+app.post("/login", (req, res) => {
+  // if (!("username" in req.cookies)) {
+  //   res
+  //     .cookie("username", req.body.username)
+  //     .redirect("/urls");
+  // } else {
+  //   res.redirect("/urls");
+  // }
+  if (!("username" in req.cookies)) {
+    res.cookie("username", req.body.username);
+  }
+  res.redirect("/urls");
+});
+
+app.post("/logout", (req, res) => {
+  
 });
 
 app.listen(PORT, () => {

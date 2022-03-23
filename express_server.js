@@ -94,6 +94,10 @@ app.get("/urls/:shortURL", (req, res) => {
     return res.redirect("/login");
   }
 
+  if (!(req.params.shortURL in urlDatabase)) {
+    return res.redirect("/urls");
+  }
+
   if (req.cookies.userID !== urlDatabase[req.params.shortURL].userID) {
     return res.redirect("/urls");
   }

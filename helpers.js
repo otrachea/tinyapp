@@ -13,7 +13,7 @@ const generateRandomString = () => {
 const emailLookup = (users, email) => {
   for (const user of Object.values(users)) {
     if (user.email === email) {
-      return true;
+      return user;
     }
   }
   return false;

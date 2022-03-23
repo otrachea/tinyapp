@@ -33,7 +33,7 @@ app.get("/urls.json", (req, res) => {
   res.json(urlDatabase);
 });
 
-
+// -------------- URL INDEX -----------------
 app.get("/urls", (req, res) => {
   const templateVars = {
     urls: urlDatabase,
@@ -48,13 +48,13 @@ app.post("/urls", (req, res) => {
   res.redirect(`/urls/${short}`);
 });
 
-
+// ------------ CREATE NEW SHORT URL --------------
 app.get("/urls/new", (req, res) => {
-  const templateVars = { userID: req.cookies["userID"] };
+  const templateVars = { user: users[req.cookies["userID"]] };
   res.render("urls_new", templateVars);
 });
 
-
+// ----------- PAGE FOR EACH SHORT URL ----------------
 app.get("/urls/:shortURL", (req, res) => {
   const templateVars = {
     shortURL: req.params.shortURL,
@@ -69,7 +69,7 @@ app.post("/urls/:shortURL", (req, res) => {
   res.redirect(`/urls/${req.params.shortURL}`);
 });
 
-
+// ---------- REGISTRATION---------------
 app.get("/register", (req, res) => {
   if (req.cookies["userID"]) {
     return res.redirect("/urls");
@@ -97,23 +97,57 @@ app.post("/register", (req, res) => {
   }
 
   let userID = generateRandomString();
-  users[userID] = { id: userID, email: req.body.email, password: req.body.password };
+  users[userID] = { userID: userID, email: req.body.email, password: req.body.password };
   res.cookie("userID", userID).redirect("/urls");
 });
 
-
+// ---------- DELETING URLS -------------
 app.post("/urls/:shortURL/delete", (req, res) => {
   delete urlDatabase[req.params.shortURL];
   res.redirect("/urls")
 });
 
-app.post("/login", (req, res) => {
-  if (!("userID" in req.cookies) && req.body.email) {
-    res.cookie("userID", req.body.userID);
+
+// -------------- LOGIN -------------------
+app.get("/login", (req, res) => {
+  if (req.cookies["userID"]) {
+    return res.redirect("/urls");
   }
-  res.redirect("/urls");
+  const templateVars = {
+    user: users[req.cookies["userID"]]
+  }
+  res.render("login", templateVars);
+})
+
+app.post("/login", (req, res) => {
+  if (!req.body.email) {
+    res.statusCode = 400;
+    return res.send("Error 400: Cannot have empty email");
+  }
+
+  if (!req.body.password) {
+    res.statusCode = 400;
+    return res.send("Error 400: Cannot have empty password");
+  }
+
+  let user = emailLookup(users, req.body.email);
+  if (user) {
+    if (user.password === req.body.password) {
+      return res.cookie("userID", user.userID).redirect("/urls");
+    }
+
+    // incorrect password
+    res.statusCode = 400;
+    return res.send("Error 400: Incorrect password");
+  }
+
+  res.statusCode = 400;
+  return res.send("Error 400: Email not found");
+
 });
 
+
+// ---------- LOGOUT --------------------
 app.post("/logout", (req, res) => {
   res.clearCookie("userID").redirect("/urls");
 });

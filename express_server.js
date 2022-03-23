@@ -67,6 +67,9 @@ app.post("/urls/:shortURL", (req, res) => {
 
 
 app.get("/register", (req, res) => {
+  if (req.cookies["userID"]) {
+    return res.redirect("/urls");
+  }
   const templateVars = {
     user: users[req.cookies["userID"]]
   }
@@ -86,8 +89,8 @@ app.post("/urls/:shortURL/delete", (req, res) => {
 });
 
 app.post("/login", (req, res) => {
-  if (!("email" in req.cookies) && req.body.email) {
-    res.cookie("email", req.body.email);
+  if (!("userID" in req.cookies) && req.body.email) {
+    res.cookie("userID", req.body.userID);
   }
   res.redirect("/urls");
 });

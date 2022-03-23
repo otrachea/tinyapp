@@ -2,6 +2,8 @@ const express = require("express");
 const app = express();
 const PORT = 8080; // default port 8080
 
+const { generateRandomString, emailLookup } = require("./helpers");
+
 app.use(express.static("public"));
 // app.use(experss.urlencoded({ extended: false }));
 app.set("view engine", "ejs");
@@ -122,23 +124,3 @@ app.listen(PORT, () => {
 });
 
 
-function generateRandomString() {
-  let alpha = "abcdefghijklmnopqrsztuvwyz";
-  alpha += alpha.toUpperCase() + "0123456789";
-  let result = "";
-
-  for (let i = 0; i < 6; i++) {
-    result += alpha[Math.floor(Math.random() * 52)];
-  }
-
-  return result;
-}
-
-function emailLookup(users, email) {
-  for (const user of Object.values(users)) {
-    if (user.email === email) {
-      return true;
-    }
-  }
-  return false;
-}

@@ -2,20 +2,23 @@ const express = require("express");
 const app = express();
 const PORT = 8080; // default port 8080
 
+app.use(express.static("public"));
+// app.use(experss.urlencoded({ extended: false }));
 app.set("view engine", "ejs");
+
+const bodyParser = require("body-parser");
+const cookieParser = require("cookie-parser");
+app.use(bodyParser.urlencoded({ extended: true }), cookieParser());
 
 const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
   "9sm5xK": "http://www.google.com"
 };
 
-const bodyParser = require("body-parser");
-const cookieParser = require("cookie-parser");
-app.use(bodyParser.urlencoded({ extended: true }), cookieParser());
-
+const users = {};
 
 app.get("/", (req, res) => {
-  res.send("Hello!");
+  res.redirect("/urls");
 });
 
 app.get("/urls.json", (req, res) => {
@@ -87,11 +90,13 @@ app.post("/logout", (req, res) => {
 });
 
 app.post("/register", (req, res) => {
-
+  let userID = generateRandomString();
+  users[userID] = { id: userID, email: req.body.email, password: req.body.password };
+  res.cookie("username", userID).redirect("/urls");
 });
 
 app.listen(PORT, () => {
-  console.log(`Example app listening on port ${PORT}!`);
+  console.log(`TinyApp listening on port ${PORT}`);
 });
 
 

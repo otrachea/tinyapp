@@ -19,4 +19,16 @@ const emailLookup = (users, email) => {
   return false;
 }
 
-module.exports = { generateRandomString, emailLookup };
+const urlsForUser = (userID, urlDatabase) => {
+  const filteredShortURLS = {};
+  for (const url in urlDatabase) {
+    if (Object.hasOwnProperty.call(urlDatabase, url)) {
+      if (urlDatabase[url].userID === userID) {
+        filteredShortURLS[url] = urlDatabase[url];
+      }
+    }
+  }
+  return filteredShortURLS;
+}
+
+module.exports = { generateRandomString, emailLookup, urlsForUser };

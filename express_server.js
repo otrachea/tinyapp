@@ -2,7 +2,7 @@ const express = require("express");
 const app = express();
 const PORT = 8080; // default port 8080
 
-const { generateRandomString, emailLookup } = require("./helpers");
+const { generateRandomString, emailLookup, urlsForUser } = require("./helpers");
 
 app.use(express.static("public"));
 app.set("view engine", "ejs");
@@ -27,6 +27,11 @@ const users = {
     userID: "aJ48lW",
     email: "fdsa@gmail.com",
     password: "test"
+  },
+  'zusVIt': {
+    userID: 'zusVIt',
+    email: "test@test.com",
+    password: "a"
   }
 };
 
@@ -38,10 +43,26 @@ app.get("/urls.json", (req, res) => {
   res.json(urlDatabase);
 });
 
+app.get("/u/:shortURL", (req, res) => {
+  if (!(req.params.shortURL in urlDatabase)) {
+    res.statusCode = 404;
+    return res.send(`Error ${res.statusCode}: ${req.params.shortURL} does not exist as a shortURL`);
+  }
+  res.redirect(urlDatabase[req.params.shortURL].longURL);
+});
+
 // -------------- URL INDEX -----------------
 app.get("/urls", (req, res) => {
+  if (!("userID" in req.cookies)) {
+    const templateVars = {
+      message: "Please login first to view your URLs",
+      user: users[req.cookies["userID"]]
+    };
+    return res.render("login", templateVars);
+  }
+
   const templateVars = {
-    urls: urlDatabase,
+    urls: urlsForUser(users[req.cookies["userID"]].userID, urlDatabase),
     user: users[req.cookies["userID"]]
   };
   res.render("urls_index", templateVars);
@@ -69,6 +90,14 @@ app.get("/urls/new", (req, res) => {
 
 // ----------- GETS PAGE FOR EACH SHORT URL ----------------
 app.get("/urls/:shortURL", (req, res) => {
+  if (!("userID" in req.cookies)) {
+    return res.redirect("/login");
+  }
+
+  if (req.cookies.userID !== urlDatabase[req.params.shortURL].userID) {
+    return res.redirect("/urls");
+  }
+
   const templateVars = {
     shortURL: req.params.shortURL,
     longURL: urlDatabase[req.params.shortURL].longURL,
@@ -129,6 +158,7 @@ app.get("/login", (req, res) => {
     return res.redirect("/urls");
   }
   const templateVars = {
+    message: undefined,
     user: users[req.cookies["userID"]]
   }
   res.render("login", templateVars);
@@ -164,7 +194,7 @@ app.post("/login", (req, res) => {
 
 // ---------- LOGOUT --------------------
 app.post("/logout", (req, res) => {
-  res.clearCookie("userID").redirect("/urls");
+  res.clearCookie("userID").redirect("/login");
 });
 
 

@@ -77,10 +77,16 @@ app.get("/register", (req, res) => {
 })
 
 app.post("/register", (req, res) => {
-  if ([req.body.email, req.body.password].includes("")) {
+  if (!req.body.email) {
     res.statusCode = 400;
-    return res.send("Error 400: Cannot have empty email or password");
+    return res.send("Error 400: Cannot have empty email");
   }
+
+  if (!req.body.password) {
+    res.statusCode = 400;
+    return res.send("Error 400: Cannot have empty password");
+  }
+  
   let userID = generateRandomString();
   users[userID] = { id: userID, email: req.body.email, password: req.body.password };
   res.cookie("userID", userID).redirect("/urls");

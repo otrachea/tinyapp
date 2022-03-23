@@ -48,14 +48,21 @@ app.get("/urls/:shortURL", (req, res) => {
   res.render("urls_show", templateVars);
 });
 
+app.get("/register", (req, res) => {
+  const templateVars = {
+    username: req.cookies["username"]
+  }
+  res.render("register", templateVars);
+})
+
+app.get("/u/:shortURL", (req, res) => {
+  res.redirect(urlDatabase[req.params.shortURL]);
+});
+
 app.post("/urls", (req, res) => {
   let short = generateRandomString();
   urlDatabase[short] = req.body.longURL;
   res.redirect(`/urls/${short}`);
-});
-
-app.get("/u/:shortURL", (req, res) => {
-  res.redirect(urlDatabase[req.params.shortURL]);
 });
 
 app.post("/urls/:shortURL", (req, res) => {
@@ -77,6 +84,10 @@ app.post("/login", (req, res) => {
 
 app.post("/logout", (req, res) => {
   res.clearCookie("username").redirect("/urls");
+});
+
+app.post("/register", (req, res) => {
+
 });
 
 app.listen(PORT, () => {

@@ -137,12 +137,12 @@ app.post("/login", (req, res) => {
     }
 
     // incorrect password
-    res.statusCode = 400;
-    return res.send("Error 400: Incorrect password");
+    res.statusCode = 403;
+    return res.send("Error 403: Incorrect password");
   }
 
-  res.statusCode = 400;
-  return res.send("Error 400: Email not found");
+  res.statusCode = 403;
+  return res.send("Error 403: Email not found");
 
 });
 

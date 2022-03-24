@@ -10,13 +10,13 @@ const generateRandomString = () => {
   return result;
 };
 
-const emailLookup = (users, email) => {
+const getUserByEmail = (users, email) => {
   for (const user of Object.values(users)) {
     if (user.email === email) {
       return user;
     }
   }
-  return false;
+  return undefined;
 };
 
 const urlsForUser = (userID, urlDatabase) => {
@@ -44,4 +44,4 @@ const checkLoggedIn = (req, res, next) => {
   next();
 };
 
-module.exports = { generateRandomString, emailLookup, urlsForUser, checkLoggedIn };
+module.exports = { generateRandomString, getUserByEmail, urlsForUser, checkLoggedIn };

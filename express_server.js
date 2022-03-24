@@ -13,6 +13,8 @@ const bodyParser = require("body-parser");
 const cookieParser = require("cookie-parser");
 app.use(bodyParser.urlencoded({ extended: true }), cookieParser());
 
+const bcrypt = require("bcryptjs");
+
 app.get("/", (req, res) => {
   res.redirect("/urls");
 });
@@ -155,7 +157,11 @@ app.post("/register", (req, res) => {
   }
 
   let userID = generateRandomString();
-  users[userID] = { userID: userID, email: req.body.email, password: req.body.password };
+  users[userID] = {
+    userID: userID,
+    email: req.body.email,
+    password: bcrypt.hashSync(req.body.password, 10)
+  };
   res.cookie("userID", userID).redirect("/urls");
 });
 
@@ -190,10 +196,6 @@ app.get("/login", (req, res) => {
     message: undefined,
     user: users[req.cookies["userID"]]
   }
-  console.log(req.statusCode);
-  if (req.statusCode === 403) {
-    templateVars.message = "Please login first"
-  }
   res.render("login", templateVars);
 })
 
@@ -210,7 +212,7 @@ app.post("/login", (req, res) => {
 
   let user = emailLookup(users, req.body.email);
   if (user) {
-    if (user.password === req.body.password) {
+    if (bcrypt.compareSync(req.body.password, user.password)) {
       return res.cookie("userID", user.userID).redirect("/urls");
     }
 

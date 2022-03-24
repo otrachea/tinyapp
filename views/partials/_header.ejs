@@ -19,16 +19,12 @@
         </div>
       </form>
     <% } else { %>  
-      <form class="form-inline justify-content-center mt-1 mx-4" action="/login" method="GET">
-        <div class="form-group mb-2">
-          <button type="submit" class="btn btn-outline-dark">Login</button>
+        <div class="form-group mb-2 form-inline justify-content-center mt-1 mx-4">
+          <a href="/login" type="submit" class="btn btn-outline-dark">Login</a>
         </div>
-      </form>
-      <form class="form-inline justify-content-center mt-1" action="/register" method="GET">
-        <div class="form-group mb-2">
-          <button type="submit" class="btn btn-outline-danger">Register</button>
+        <div class="form-group mb-2 form-inline justify-content-center mt-1">
+          <a href="/register" type="submit" class="btn btn-outline-danger">Register</a>
         </div>
-      </form>
     <% } %> 
   </nav>
 </header>

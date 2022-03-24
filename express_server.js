@@ -11,10 +11,11 @@ app.set("view engine", "ejs");
 
 const bodyParser = require("body-parser");
 const cookieSession = require("cookie-session");
+const methodOverride = require("method-override");
 app.use(bodyParser.urlencoded({ extended: true }), cookieSession({
   name: 'session',
   keys: ['key1', 'key2']
-}));
+}), methodOverride("_method"));
 
 const bcrypt = require("bcryptjs");
 
@@ -115,7 +116,7 @@ app.get("/urls/:shortURL", checkLoggedIn, (req, res) => {
 });
 
 // ------------ EDITS EXISTING SHORT ------------------
-app.post("/urls/:shortURL", checkLoggedIn, (req, res) => {
+app.put("/urls/:shortURL", checkLoggedIn, (req, res) => {
   // user not logged in
   // if (!("userID" in req.session)) {
   //   return res.redirect("/login");
@@ -182,7 +183,7 @@ app.post("/register", (req, res) => {
 });
 
 // ---------- DELETING URLS -------------
-app.post("/urls/:shortURL/delete", checkLoggedIn, (req, res) => {
+app.delete("/urls/:shortURL/delete", checkLoggedIn, (req, res) => {
   // user not logged in
   // if (!("userID" in req.session)) {
   //   return res.redirect("/login");

@@ -32,7 +32,7 @@ const urlsForUser = (userID, urlDatabase) => {
 };
 
 const checkLoggedIn = (req, res, next) => {
-  if (!("userID" in req.cookies)) {
+  if (!("userID" in req.session)) {
     // const templateVars = {
     //   message: "Please login first to view your URLs",
     //   user: undefined

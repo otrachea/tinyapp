@@ -10,8 +10,11 @@ app.use(express.static("public"));
 app.set("view engine", "ejs");
 
 const bodyParser = require("body-parser");
-const cookieParser = require("cookie-parser");
-app.use(bodyParser.urlencoded({ extended: true }), cookieParser());
+const cookieSession = require("cookie-session");
+app.use(bodyParser.urlencoded({ extended: true }), cookieSession({
+  name: 'session',
+  keys: ['key1']
+}));
 
 const bcrypt = require("bcryptjs");
 
@@ -35,18 +38,18 @@ app.get("/u/:shortURL", (req, res) => {
 // -------------- URL INDEX -----------------
 app.get("/urls", checkLoggedIn, (req, res) => {
   // if user is not logged in
-  // if (!("userID" in req.cookies)) {
+  // if (!("userID" in req.session)) {
   //   const templateVars = {
   //     message: "Please login first to view your URLs",
-  //     user: users[req.cookies["userID"]]
+  //     user: users[req.session.userID]
   //   };
   //   return res.render("login", templateVars);
   // }
 
   // if user is logged in displays all their shortURLs
   const templateVars = {
-    urls: urlsForUser(users[req.cookies["userID"]].userID, urlDatabase),
-    user: users[req.cookies["userID"]]
+    urls: urlsForUser(users[req.session.userID].userID, urlDatabase),
+    user: users[req.session.userID]
   };
   res.render("urls_index", templateVars);
 });
@@ -54,7 +57,7 @@ app.get("/urls", checkLoggedIn, (req, res) => {
 // ----------- CREATES NEW URL -------------------
 app.post("/urls", checkLoggedIn, (req, res) => {
   // if user is not logged in
-  // if (!("userID" in req.cookies)) {
+  // if (!("userID" in req.session)) {
   //   return res
   //     .status(403)
   //     .send(`Error ${res.statusCode}: Only logged in users can create new urls`);
@@ -62,21 +65,21 @@ app.post("/urls", checkLoggedIn, (req, res) => {
 
   // if user logged in, can create new shortURLs
   let short = generateRandomString();
-  urlDatabase[short] = { longURL: req.body.longURL, userID: req.cookies.userID };
+  urlDatabase[short] = { longURL: req.body.longURL, userID: req.session.userID };
   res.redirect(`/urls/${short}`);
 });
 
 // ------------ GETS NEW SHORTURL PAGE --------------
 app.get("/urls/new", checkLoggedIn, (req, res) => {
   // if user not logged in
-  // if (!("userID" in req.cookies)) {
+  // if (!("userID" in req.session)) {
   //   const templateVars = {
   //     message: "Please login first to create new short URLs",
-  //     user: users[req.cookies["userID"]]
+  //     user: users[req.session.userID]
   //   };
   //   return res.render("login", templateVars);
   // }
-  const templateVars = { user: users[req.cookies["userID"]] };
+  const templateVars = { user: users[req.session.userID] };
   res.render("urls_new", templateVars);
 });
 
@@ -84,7 +87,7 @@ app.get("/urls/new", checkLoggedIn, (req, res) => {
 
 app.get("/urls/:shortURL", checkLoggedIn, (req, res) => {
 
-  // if (!("userID" in req.cookies)) {
+  // if (!("userID" in req.session)) {
   //   const templateVars = {
   //     message: "Please login first to view your URLs",
   //     user: undefined
@@ -96,14 +99,14 @@ app.get("/urls/:shortURL", checkLoggedIn, (req, res) => {
     return res.status(401).send("Short URL does not exist");
   }
 
-  if (req.cookies.userID !== urlDatabase[req.params.shortURL].userID) {
+  if (req.session.userID !== urlDatabase[req.params.shortURL].userID) {
     return res.status(403).send("This URL does not belong belong to you");
   }
 
   const templateVars = {
     shortURL: req.params.shortURL,
     longURL: urlDatabase[req.params.shortURL].longURL,
-    user: users[req.cookies["userID"]]
+    user: users[req.session.userID]
   };
   res.render("urls_show", templateVars);
 });
@@ -111,7 +114,7 @@ app.get("/urls/:shortURL", checkLoggedIn, (req, res) => {
 // ------------ EDITS EXISTING SHORT ------------------
 app.post("/urls/:shortURL", checkLoggedIn, (req, res) => {
   // user not logged in
-  // if (!("userID" in req.cookies)) {
+  // if (!("userID" in req.session)) {
   //   return res.redirect("/login");
   // }
 
@@ -121,7 +124,7 @@ app.post("/urls/:shortURL", checkLoggedIn, (req, res) => {
   }
 
   // shortURL does not belong to the logged in user
-  if (req.cookies.userID !== urlDatabase[req.params.shortURL].userID) {
+  if (req.session.userID !== urlDatabase[req.params.shortURL].userID) {
     return res.status(403).send("This URL does not belong belong to you");
   }
 
@@ -131,11 +134,11 @@ app.post("/urls/:shortURL", checkLoggedIn, (req, res) => {
 
 // ---------- REGISTRATION---------------
 app.get("/register", (req, res) => {
-  if ("userID" in req.cookies) {
+  if ("userID" in req.session) {
     return res.redirect("/urls");
   }
   const templateVars = {
-    user: users[req.cookies["userID"]]
+    user: users[req.session.userID]
   }
   res.render("register", templateVars);
 })
@@ -162,13 +165,14 @@ app.post("/register", (req, res) => {
     email: req.body.email,
     password: bcrypt.hashSync(req.body.password, 10)
   };
-  res.cookie("userID", userID).redirect("/urls");
+  req.session.userID = userID;
+  res.redirect("/urls");
 });
 
 // ---------- DELETING URLS -------------
 app.post("/urls/:shortURL/delete", checkLoggedIn, (req, res) => {
   // user not logged in
-  // if (!("userID" in req.cookies)) {
+  // if (!("userID" in req.session)) {
   //   return res.redirect("/login");
   // }
 
@@ -178,7 +182,7 @@ app.post("/urls/:shortURL/delete", checkLoggedIn, (req, res) => {
   }
 
   // shortURL does not belong to the logged in user
-  if (req.cookies.userID !== urlDatabase[req.params.shortURL].userID) {
+  if (req.session.userID !== urlDatabase[req.params.shortURL].userID) {
     return res.status(403).send("This URL does not belong belong to you");
   }
 
@@ -189,12 +193,12 @@ app.post("/urls/:shortURL/delete", checkLoggedIn, (req, res) => {
 
 // -------------- LOGIN -------------------
 app.get("/login", (req, res) => {
-  if ("userID" in req.cookies) {
+  if ("userID" in req.session) {
     return res.redirect("/urls");
   }
   const templateVars = {
     message: undefined,
-    user: users[req.cookies["userID"]]
+    user: users[req.session.userID]
   }
   res.render("login", templateVars);
 })
@@ -213,7 +217,8 @@ app.post("/login", (req, res) => {
   let user = emailLookup(users, req.body.email);
   if (user) {
     if (bcrypt.compareSync(req.body.password, user.password)) {
-      return res.cookie("userID", user.userID).redirect("/urls");
+      req.session.userID = user.userID;
+      return res.redirect("/urls");
     }
 
     // incorrect password
@@ -229,7 +234,8 @@ app.post("/login", (req, res) => {
 
 // ---------- LOGOUT --------------------
 app.post("/logout", (req, res) => {
-  res.clearCookie("userID").redirect("/login");
+  req.session = null;
+  res.redirect("/login");
 });
 
 

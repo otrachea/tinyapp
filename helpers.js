@@ -31,4 +31,17 @@ const urlsForUser = (userID, urlDatabase) => {
   return filteredShortURLS;
 }
 
-module.exports = { generateRandomString, emailLookup, urlsForUser };
+const checkLoggedIn = (req, res, next) => {
+  if (!("userID" in req.cookies)) {
+    // const templateVars = {
+    //   message: "Please login first to view your URLs",
+    //   user: undefined
+    // };
+    // return res.render("login", templateVars);
+    // return res.redirect(403, "/login");
+    return res.status(403).send("Please login first");
+  }
+  next();
+}
+
+module.exports = { generateRandomString, emailLookup, urlsForUser, checkLoggedIn };

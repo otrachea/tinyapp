@@ -2,7 +2,7 @@ const express = require("express");
 const app = express();
 const PORT = 8080; // default port 8080
 
-const { generateRandomString, emailLookup, urlsForUser } = require("./helpers");
+const { generateRandomString, emailLookup, urlsForUser, checkLoggedIn } = require("./helpers");
 const { urlDatabase } = require("./data/urlDB");
 const { users } = require("./data/userDB");
 
@@ -23,22 +23,25 @@ app.get("/urls.json", (req, res) => {
 
 app.get("/u/:shortURL", (req, res) => {
   if (!(req.params.shortURL in urlDatabase)) {
-    res.statusCode = 400;
-    return res.send(`Error ${res.statusCode}: ${req.params.shortURL} does not exist as a shortURL`);
+    return res
+      .status(400)
+      .send(`Error ${res.statusCode}: ${req.params.shortURL} does not exist as a shortURL`);
   }
   res.redirect(urlDatabase[req.params.shortURL].longURL);
 });
 
 // -------------- URL INDEX -----------------
-app.get("/urls", (req, res) => {
-  if (!("userID" in req.cookies)) {
-    const templateVars = {
-      message: "Please login first to view your URLs",
-      user: users[req.cookies["userID"]]
-    };
-    return res.render("login", templateVars);
-  }
+app.get("/urls", checkLoggedIn, (req, res) => {
+  // if user is not logged in
+  // if (!("userID" in req.cookies)) {
+  //   const templateVars = {
+  //     message: "Please login first to view your URLs",
+  //     user: users[req.cookies["userID"]]
+  //   };
+  //   return res.render("login", templateVars);
+  // }
 
+  // if user is logged in displays all their shortURLs
   const templateVars = {
     urls: urlsForUser(users[req.cookies["userID"]].userID, urlDatabase),
     user: users[req.cookies["userID"]]
@@ -47,30 +50,45 @@ app.get("/urls", (req, res) => {
 });
 
 // ----------- CREATES NEW URL -------------------
-app.post("/urls", (req, res) => {
-  if (!("userID" in req.cookies)) {
-    res.statusCode = 403;
-    return res.send(`Error ${res.statusCode}: Only logged in users can create new urls`);
-  }
+app.post("/urls", checkLoggedIn, (req, res) => {
+  // if user is not logged in
+  // if (!("userID" in req.cookies)) {
+  //   return res
+  //     .status(403)
+  //     .send(`Error ${res.statusCode}: Only logged in users can create new urls`);
+  // }
+
+  // if user logged in, can create new shortURLs
   let short = generateRandomString();
   urlDatabase[short] = { longURL: req.body.longURL, userID: req.cookies.userID };
   res.redirect(`/urls/${short}`);
 });
 
 // ------------ GETS NEW SHORTURL PAGE --------------
-app.get("/urls/new", (req, res) => {
-  if (!("userID" in req.cookies)) {
-    return res.redirect("/login");
-  }
+app.get("/urls/new", checkLoggedIn, (req, res) => {
+  // if user not logged in
+  // if (!("userID" in req.cookies)) {
+  //   const templateVars = {
+  //     message: "Please login first to create new short URLs",
+  //     user: users[req.cookies["userID"]]
+  //   };
+  //   return res.render("login", templateVars);
+  // }
   const templateVars = { user: users[req.cookies["userID"]] };
   res.render("urls_new", templateVars);
 });
 
 // ----------- GETS PAGE FOR EACH SHORT URL ----------------
-app.get("/urls/:shortURL", (req, res) => {
-  if (!("userID" in req.cookies)) {
-    return res.redirect("/login");
-  }
+
+app.get("/urls/:shortURL", checkLoggedIn, (req, res) => {
+
+  // if (!("userID" in req.cookies)) {
+  //   const templateVars = {
+  //     message: "Please login first to view your URLs",
+  //     user: undefined
+  //   };
+  //   return res.render("login", templateVars);
+  // }
 
   if (!(req.params.shortURL in urlDatabase)) {
     return res.redirect("/urls");
@@ -88,13 +106,12 @@ app.get("/urls/:shortURL", (req, res) => {
   res.render("urls_show", templateVars);
 });
 
-
 // ------------ EDITS EXISTING SHORT ------------------
-app.post("/urls/:shortURL", (req, res) => {
+app.post("/urls/:shortURL", checkLoggedIn, (req, res) => {
   // user not logged in
-  if (!("userID" in req.cookies)) {
-    return res.redirect("/login");
-  }
+  // if (!("userID" in req.cookies)) {
+  //   return res.redirect("/login");
+  // }
 
   // shortURL not in database
   if (!(req.params.shortURL in urlDatabase)) {
@@ -143,11 +160,11 @@ app.post("/register", (req, res) => {
 });
 
 // ---------- DELETING URLS -------------
-app.post("/urls/:shortURL/delete", (req, res) => {
+app.post("/urls/:shortURL/delete", checkLoggedIn, (req, res) => {
   // user not logged in
-  if (!("userID" in req.cookies)) {
-    return res.redirect("/login");
-  }
+  // if (!("userID" in req.cookies)) {
+  //   return res.redirect("/login");
+  // }
 
   // shortURL not in database
   if (!(req.params.shortURL in urlDatabase)) {
@@ -158,6 +175,7 @@ app.post("/urls/:shortURL/delete", (req, res) => {
   if (req.cookies.userID !== urlDatabase[req.params.shortURL].userID) {
     return res.redirect("/urls");
   }
+
   delete urlDatabase[req.params.shortURL];
   res.redirect("/urls")
 });
@@ -171,6 +189,10 @@ app.get("/login", (req, res) => {
   const templateVars = {
     message: undefined,
     user: users[req.cookies["userID"]]
+  }
+  console.log(req.statusCode);
+  if (req.statusCode === 403) {
+    templateVars.message = "Please login first"
   }
   res.render("login", templateVars);
 })

@@ -19,6 +19,9 @@ app.use(bodyParser.urlencoded({ extended: true }), cookieSession({
 const bcrypt = require("bcryptjs");
 
 app.get("/", (req, res) => {
+  if (!("userID" in req.session)) {
+    return res.redirect("/login");
+  }
   res.redirect("/urls");
 });
 
@@ -159,13 +162,6 @@ app.post("/register", (req, res) => {
     res.statusCode = 400;
     return res.send(`Error ${res.statusCode}: Cannot have empty password`);
   }
-
-
-  // users[userID] = {
-  //   userID: userID,
-  //   email: req.body.email,
-  //   password: bcrypt.hashSync(req.body.password, 10)
-  // };
 
   bcrypt.genSalt(10, (err, salt) => {
     bcrypt.hash(req.body.password, salt, (err, hash) => {

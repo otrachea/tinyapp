@@ -91,11 +91,11 @@ app.get("/urls/:shortURL", checkLoggedIn, (req, res) => {
   // }
 
   if (!(req.params.shortURL in urlDatabase)) {
-    return res.redirect("/urls");
+    return res.status(401).send("Short URL does not exist");
   }
 
   if (req.cookies.userID !== urlDatabase[req.params.shortURL].userID) {
-    return res.redirect("/urls");
+    return res.status(403).send("This URL does not belong belong to you");
   }
 
   const templateVars = {
@@ -115,12 +115,12 @@ app.post("/urls/:shortURL", checkLoggedIn, (req, res) => {
 
   // shortURL not in database
   if (!(req.params.shortURL in urlDatabase)) {
-    return res.redirect("/urls");
+    return res.status(401).send("Short URL does not exist");
   }
 
   // shortURL does not belong to the logged in user
   if (req.cookies.userID !== urlDatabase[req.params.shortURL].userID) {
-    return res.redirect("/urls");
+    return res.status(403).send("This URL does not belong belong to you");
   }
 
   urlDatabase[req.params.shortURL].longURL = req.body.newLongURL;
@@ -168,12 +168,12 @@ app.post("/urls/:shortURL/delete", checkLoggedIn, (req, res) => {
 
   // shortURL not in database
   if (!(req.params.shortURL in urlDatabase)) {
-    return res.redirect("/urls");
+    return res.status(401).send("Short URL does not exist");
   }
 
   // shortURL does not belong to the logged in user
   if (req.cookies.userID !== urlDatabase[req.params.shortURL].userID) {
-    return res.redirect("/urls");
+    return res.status(403).send("This URL does not belong belong to you");
   }
 
   delete urlDatabase[req.params.shortURL];

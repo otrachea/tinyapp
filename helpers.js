@@ -8,7 +8,7 @@ const generateRandomString = () => {
   }
 
   return result;
-}
+};
 
 const emailLookup = (users, email) => {
   for (const user of Object.values(users)) {
@@ -17,7 +17,7 @@ const emailLookup = (users, email) => {
     }
   }
   return false;
-}
+};
 
 const urlsForUser = (userID, urlDatabase) => {
   const filteredShortURLS = {};
@@ -29,7 +29,7 @@ const urlsForUser = (userID, urlDatabase) => {
     }
   }
   return filteredShortURLS;
-}
+};
 
 const checkLoggedIn = (req, res, next) => {
   if (!("userID" in req.cookies)) {
@@ -42,6 +42,6 @@ const checkLoggedIn = (req, res, next) => {
     return res.status(403).send("Please login first");
   }
   next();
-}
+};
 
 module.exports = { generateRandomString, emailLookup, urlsForUser, checkLoggedIn };

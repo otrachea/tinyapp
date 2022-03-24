@@ -2,7 +2,7 @@ const express = require("express");
 const app = express();
 const PORT = 8080; // default port 8080
 
-const { generateRandomString, emailLookup, urlsForUser, checkLoggedIn } = require("./helpers");
+const { generateRandomString, getUserByEmail, urlsForUser, checkLoggedIn } = require("./helpers");
 const { urlDatabase } = require("./data/urlDB");
 const { users } = require("./data/userDB");
 
@@ -13,7 +13,7 @@ const bodyParser = require("body-parser");
 const cookieSession = require("cookie-session");
 app.use(bodyParser.urlencoded({ extended: true }), cookieSession({
   name: 'session',
-  keys: ['key1']
+  keys: ['key1', 'key2']
 }));
 
 const bcrypt = require("bcryptjs");
@@ -134,6 +134,7 @@ app.post("/urls/:shortURL", checkLoggedIn, (req, res) => {
 
 // ---------- REGISTRATION---------------
 app.get("/register", (req, res) => {
+
   if ("userID" in req.session) {
     return res.redirect("/urls");
   }
@@ -149,7 +150,7 @@ app.post("/register", (req, res) => {
     return res.send(`Error ${res.statusCode}: Cannot have empty email`);
   }
 
-  if (emailLookup(users, req.body.email)) {
+  if (getUserByEmail(users, req.body.email)) {
     res.statusCode = 400;
     return res.send(`Error ${res.statusCode}: Email already registered`);
   }
@@ -159,14 +160,29 @@ app.post("/register", (req, res) => {
     return res.send(`Error ${res.statusCode}: Cannot have empty password`);
   }
 
-  let userID = generateRandomString();
-  users[userID] = {
-    userID: userID,
-    email: req.body.email,
-    password: bcrypt.hashSync(req.body.password, 10)
-  };
-  req.session.userID = userID;
-  res.redirect("/urls");
+
+  // users[userID] = {
+  //   userID: userID,
+  //   email: req.body.email,
+  //   password: bcrypt.hashSync(req.body.password, 10)
+  // };
+
+  bcrypt.genSalt(10, (err, salt) => {
+    bcrypt.hash(req.body.password, salt, (err, hash) => {
+
+      let userID = generateRandomString();
+
+      users[userID] = {
+        userID: userID,
+        email: req.body.email,
+        password: hash
+      };
+
+      req.session.userID = userID;
+      res.redirect("/urls");
+    });
+  });
+
 });
 
 // ---------- DELETING URLS -------------
@@ -214,21 +230,24 @@ app.post("/login", (req, res) => {
     return res.send(`Error ${res.statusCode}: Cannot have empty password`);
   }
 
-  let user = emailLookup(users, req.body.email);
-  if (user) {
-    if (bcrypt.compareSync(req.body.password, user.password)) {
-      req.session.userID = user.userID;
-      return res.redirect("/urls");
-    }
+  let user = getUserByEmail(users, req.body.email);
 
-    // incorrect password
+  if (!user) {
     res.statusCode = 403;
-    return res.send(`Error ${res.statusCode}: Incorrect password`);
+    return res.send(`Error ${res.statusCode}: Email not found`);
   }
 
-  res.statusCode = 403;
-  return res.send(`Error ${res.statusCode}: Email not found`);
+  bcrypt.compare(req.body.password, user.password, (err, success) => {
+    if (!success) {
+      res.statusCode = 403;
+      return res.send(`Error ${res.statusCode}: Incorrect password`);
+    }
 
+    req.session.userID = user.userID;
+    res.redirect("/urls");
+
+  });
+  
 });
 
 

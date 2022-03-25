@@ -42,7 +42,7 @@ app.get("/u/:shortURL", (req, res) => {
   if (!("visitorID" in req.session)) {
     req.session.visitorID = (Math.random() * 1000000).toFixed(0).toString().padStart(6, '1');
   }
-  url.visitors.push({ visitorID: req.session.visitorID, timeStamp: new Date().toString() });
+  url.visitors.push({ visitorID: req.session.visitorID, timeStamp: new Date(Date.now()) });
 
   res.redirect(url.longURL);
 });

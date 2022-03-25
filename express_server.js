@@ -92,12 +92,22 @@ app.get("/urls/:shortURL", checkLoggedIn, (req, res) => {
   }
 
   const url = urlDatabase[req.params.shortURL];
+
+  // counts number of unique visitors
+  const visitorCount = {};
+  for (const visitor of url.visitors) {
+    if (!(visitor.visitorID in visitorCount)) {
+      visitorCount[visitor.visitorID] = 0;
+    }
+    visitorCount[visitor.visitorID]++;
+  }
+
   const templateVars = {
     shortURL: req.params.shortURL,
     longURL: url.longURL,
     user: users[req.session.userID],
     timesVisited: url.timesVisited,
-    uniqueVisitors: url.visitors.length,
+    uniqueVisitors: Object.keys(visitorCount).length,
     visitors: url.visitors
   };
   res.render("urls_show", templateVars);
@@ -126,7 +136,7 @@ app.get("/register", (req, res) => {
   if ("userID" in req.session) {
     return res.redirect("/urls");
   }
-  
+
   const templateVars = {
     user: users[req.session.userID]
   };

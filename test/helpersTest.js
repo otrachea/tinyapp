@@ -21,7 +21,7 @@ describe("#getUserByEmail", () => {
       id: "userRandomID",
       email: "user@example.com",
       password: "purple-monkey-dinosaur"
-    })
+    });
   });
 
   it("should return false when no email found", () => {

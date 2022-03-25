@@ -91,7 +91,7 @@ app.get("/urls/:shortURL", checkLoggedIn, (req, res) => {
     return res.status(403).send("This URL does not belong belong to you");
   }
 
-  const url = urlDatabase[req.params.shortURL]; 
+  const url = urlDatabase[req.params.shortURL];
   const templateVars = {
     shortURL: req.params.shortURL,
     longURL: url.longURL,
@@ -126,11 +126,12 @@ app.get("/register", (req, res) => {
   if ("userID" in req.session) {
     return res.redirect("/urls");
   }
+  
   const templateVars = {
     user: users[req.session.userID]
-  }
+  };
   res.render("register", templateVars);
-})
+});
 
 app.post("/register", (req, res) => {
   if (!req.body.email) {
@@ -180,7 +181,7 @@ app.delete("/urls/:shortURL/delete", checkLoggedIn, (req, res) => {
   }
 
   delete urlDatabase[req.params.shortURL];
-  res.redirect("/urls")
+  res.redirect("/urls");
 });
 
 // -------------- LOGIN -------------------
@@ -190,9 +191,9 @@ app.get("/login", (req, res) => {
   }
   const templateVars = {
     user: users[req.session.userID]
-  }
+  };
   res.render("login", templateVars);
-})
+});
 
 app.post("/login", (req, res) => {
   if (!req.body.email) {
@@ -237,7 +238,7 @@ app.post("/logout", (req, res) => {
 app.get("*", (req, res) => {
   res.statusCode = 404;
   res.send("Page not found");
-})
+});
 
 
 app.listen(PORT, () => {

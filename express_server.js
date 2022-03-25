@@ -100,7 +100,6 @@ app.get("/urls/:shortURL", checkLoggedIn, (req, res) => {
     uniqueVisitors: url.visitors.length,
     visitors: url.visitors
   };
-  console.log(url.visitors);
   res.render("urls_show", templateVars);
 });
 
@@ -232,6 +231,13 @@ app.post("/logout", (req, res) => {
   req.session = null;
   res.redirect("/login");
 });
+
+
+// ----------- ANY NON-EXISTING URL ---------
+app.get("*", (req, res) => {
+  res.statusCode = 404;
+  res.send("Page not found");
+})
 
 
 app.listen(PORT, () => {

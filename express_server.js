@@ -41,15 +41,7 @@ app.get("/u/:shortURL", (req, res) => {
 
 // -------------- URL INDEX -----------------
 app.get("/urls", checkLoggedIn, (req, res) => {
-  // if user is not logged in
-  // if (!("userID" in req.session)) {
-  //   const templateVars = {
-  //     message: "Please login first to view your URLs",
-  //     user: users[req.session.userID]
-  //   };
-  //   return res.render("login", templateVars);
-  // }
-
+  
   // if user is logged in displays all their shortURLs
   const templateVars = {
     urls: urlsForUser(users[req.session.userID].userID, urlDatabase),
@@ -60,12 +52,6 @@ app.get("/urls", checkLoggedIn, (req, res) => {
 
 // ----------- CREATES NEW URL -------------------
 app.post("/urls", checkLoggedIn, (req, res) => {
-  // if user is not logged in
-  // if (!("userID" in req.session)) {
-  //   return res
-  //     .status(403)
-  //     .send(`Error ${res.statusCode}: Only logged in users can create new urls`);
-  // }
 
   // if user logged in, can create new shortURLs
   let short = generateRandomString();
@@ -75,14 +61,6 @@ app.post("/urls", checkLoggedIn, (req, res) => {
 
 // ------------ GETS NEW SHORTURL PAGE --------------
 app.get("/urls/new", checkLoggedIn, (req, res) => {
-  // if user not logged in
-  // if (!("userID" in req.session)) {
-  //   const templateVars = {
-  //     message: "Please login first to create new short URLs",
-  //     user: users[req.session.userID]
-  //   };
-  //   return res.render("login", templateVars);
-  // }
   const templateVars = { user: users[req.session.userID] };
   res.render("urls_new", templateVars);
 });
@@ -90,14 +68,6 @@ app.get("/urls/new", checkLoggedIn, (req, res) => {
 // ----------- GETS PAGE FOR EACH SHORT URL ----------------
 
 app.get("/urls/:shortURL", checkLoggedIn, (req, res) => {
-
-  // if (!("userID" in req.session)) {
-  //   const templateVars = {
-  //     message: "Please login first to view your URLs",
-  //     user: undefined
-  //   };
-  //   return res.render("login", templateVars);
-  // }
 
   if (!(req.params.shortURL in urlDatabase)) {
     return res.status(401).send("Short URL does not exist");
@@ -117,10 +87,6 @@ app.get("/urls/:shortURL", checkLoggedIn, (req, res) => {
 
 // ------------ EDITS EXISTING SHORT ------------------
 app.put("/urls/:shortURL", checkLoggedIn, (req, res) => {
-  // user not logged in
-  // if (!("userID" in req.session)) {
-  //   return res.redirect("/login");
-  // }
 
   // shortURL not in database
   if (!(req.params.shortURL in urlDatabase)) {
@@ -184,10 +150,6 @@ app.post("/register", (req, res) => {
 
 // ---------- DELETING URLS -------------
 app.delete("/urls/:shortURL/delete", checkLoggedIn, (req, res) => {
-  // user not logged in
-  // if (!("userID" in req.session)) {
-  //   return res.redirect("/login");
-  // }
 
   // shortURL not in database
   if (!(req.params.shortURL in urlDatabase)) {

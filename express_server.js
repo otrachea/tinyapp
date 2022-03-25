@@ -36,12 +36,20 @@ app.get("/u/:shortURL", (req, res) => {
       .status(400)
       .send(`Error ${res.statusCode}: ${req.params.shortURL} does not exist as a shortURL`);
   }
-  res.redirect(urlDatabase[req.params.shortURL].longURL);
+  let url = urlDatabase[req.params.shortURL];
+  url.timesVisited++;
+
+  if (!("visitorID" in req.session)) {
+    req.session.visitorID = (Math.random() * 1000000).toFixed(0).toString().padStart(6, '1');
+  }
+  url.visitors.push({ visitorID: req.session.visitorID, timeStamp: new Date().toString() });
+
+  res.redirect(url.longURL);
 });
 
 // -------------- URL INDEX -----------------
 app.get("/urls", checkLoggedIn, (req, res) => {
-  
+
   // if user is logged in displays all their shortURLs
   const templateVars = {
     urls: urlsForUser(users[req.session.userID].userID, urlDatabase),
@@ -55,7 +63,13 @@ app.post("/urls", checkLoggedIn, (req, res) => {
 
   // if user logged in, can create new shortURLs
   let short = generateRandomString();
-  urlDatabase[short] = { longURL: req.body.longURL, userID: req.session.userID };
+  urlDatabase[short] = {
+    longURL: req.body.longURL,
+    userID: req.session.userID,
+    timeCreated: new Date().toString(),
+    timesVisited: 0,
+    visitors: []
+  };
   res.redirect(`/urls/${short}`);
 });
 
@@ -77,11 +91,16 @@ app.get("/urls/:shortURL", checkLoggedIn, (req, res) => {
     return res.status(403).send("This URL does not belong belong to you");
   }
 
+  const url = urlDatabase[req.params.shortURL]; 
   const templateVars = {
     shortURL: req.params.shortURL,
-    longURL: urlDatabase[req.params.shortURL].longURL,
-    user: users[req.session.userID]
+    longURL: url.longURL,
+    user: users[req.session.userID],
+    timesVisited: url.timesVisited,
+    uniqueVisitors: url.visitors.length,
+    visitors: url.visitors
   };
+  console.log(url.visitors);
   res.render("urls_show", templateVars);
 });
 
@@ -165,14 +184,12 @@ app.delete("/urls/:shortURL/delete", checkLoggedIn, (req, res) => {
   res.redirect("/urls")
 });
 
-
 // -------------- LOGIN -------------------
 app.get("/login", (req, res) => {
   if ("userID" in req.session) {
     return res.redirect("/urls");
   }
   const templateVars = {
-    message: undefined,
     user: users[req.session.userID]
   }
   res.render("login", templateVars);
@@ -206,7 +223,7 @@ app.post("/login", (req, res) => {
     res.redirect("/urls");
 
   });
-  
+
 });
 
 

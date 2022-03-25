@@ -17,13 +17,19 @@
   <body>
 
     <div class="card text-center">
-      <div class="card-header"></div>
+      <div class="card-header">
+        <div class="row justify-content-center">
+          <div class="col-4">Number of vists: <%= timesVisited %></div>
+          <div class="col-4">Number of unique visitors: <%= uniqueVisitors %></div>
+        </div>
+      </div>
       <div class="card-body">
         <h5 class="card-title">TinyURL for: <%= longURL %>
         </h5>
         <p class="card-text">Short URL: <a href="/u/<%= shortURL %>">
             <%= shortURL %>
-          </a></p>
+          </a>
+        </p>
       </div>
       <div class="card-footer text-muted">
         <h3>Edit</h3>
@@ -35,9 +41,25 @@
             <button type="submit" class="btn btn-primary">Submit</button>
           </div>
         </form>
-
       </div>
-
+      <table class="table">
+        <thead>
+          <tr>
+            <th scope="col">Visitor #</th>
+            <th scope="col">Time</th>
+          </tr>
+          <tbody>
+            <% if (visitors.length > 0) { %>
+              <% for(const visitor of visitors) { %>  
+                <tr scope="row">
+                  <td><%= visitor.visitorID %></td>
+                  <td><%= visitor.timeStamp %></td>
+                </tr>
+              <% } %> 
+            <% } %> 
+          </tbody>
+        </thead>
+      </table>
     </div>
 
     <!-- Bootstrap 3 -->

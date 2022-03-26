@@ -31,17 +31,23 @@ app.get("/urls.json", (req, res) => {
 });
 
 app.get("/u/:shortURL", (req, res) => {
+  // checks if shortURL actually exists in database
   if (!(req.params.shortURL in urlDatabase)) {
     return res
       .status(400)
       .send(`Error ${res.statusCode}: ${req.params.shortURL} does not exist as a shortURL`);
   }
-  let url = urlDatabase[req.params.shortURL];
-  url.timesVisited++;
 
+  let url = urlDatabase[req.params.shortURL];
+  url.timesVisited++; 
+
+  // whenever someone clicks on redirection link, gives them a visitor cookie to track
+  // if and when they click on the redirection link again
   if (!("visitorID" in req.session)) {
+    // creating random visitor id
     req.session.visitorID = (Math.random() * 1000000).toFixed(0).toString().padStart(6, '1');
   }
+  // adding each visit 
   url.visitors.push({ visitorID: req.session.visitorID, timeStamp: new Date(Date.now()) });
 
   res.redirect(url.longURL);
@@ -74,19 +80,26 @@ app.post("/urls", checkLoggedIn, (req, res) => {
 });
 
 // ------------ GETS NEW SHORTURL PAGE --------------
-app.get("/urls/new", checkLoggedIn, (req, res) => {
+app.get("/urls/new", (req, res) => {
+
+  // user not logged in
+  if (!("userID" in req.session)) {
+    return res.redirect("/login");
+  }
+
   const templateVars = { user: users[req.session.userID] };
   res.render("urls_new", templateVars);
 });
 
 // ----------- GETS PAGE FOR EACH SHORT URL ----------------
-
 app.get("/urls/:shortURL", checkLoggedIn, (req, res) => {
 
+  // short url not in database
   if (!(req.params.shortURL in urlDatabase)) {
     return res.status(401).send("Short URL does not exist");
   }
 
+  // url does not belong to logged in user
   if (req.session.userID !== urlDatabase[req.params.shortURL].userID) {
     return res.status(403).send("This URL does not belong belong to you");
   }
@@ -127,12 +140,13 @@ app.put("/urls/:shortURL", checkLoggedIn, (req, res) => {
   }
 
   urlDatabase[req.params.shortURL].longURL = req.body.newLongURL;
-  res.redirect(`/urls/${req.params.shortURL}`);
+  res.redirect(`/urls`);
 });
 
 // ---------- REGISTRATION---------------
 app.get("/register", (req, res) => {
 
+  // if user logged in, redirects to /urls
   if ("userID" in req.session) {
     return res.redirect("/urls");
   }
@@ -144,6 +158,7 @@ app.get("/register", (req, res) => {
 });
 
 app.post("/register", (req, res) => {
+
   if (!req.body.email) {
     res.statusCode = 400;
     return res.send(`Error ${res.statusCode}: Cannot have empty email`);
@@ -159,6 +174,7 @@ app.post("/register", (req, res) => {
     return res.send(`Error ${res.statusCode}: Cannot have empty password`);
   }
 
+  // creates hashed password and adds newly created user to database
   bcrypt.genSalt(10, (err, salt) => {
     bcrypt.hash(req.body.password, salt, (err, hash) => {
 
@@ -196,9 +212,12 @@ app.delete("/urls/:shortURL/delete", checkLoggedIn, (req, res) => {
 
 // -------------- LOGIN -------------------
 app.get("/login", (req, res) => {
+  
+  // if user logged in, redirects to /urls
   if ("userID" in req.session) {
     return res.redirect("/urls");
   }
+
   const templateVars = {
     user: users[req.session.userID]
   };
@@ -206,6 +225,7 @@ app.get("/login", (req, res) => {
 });
 
 app.post("/login", (req, res) => {
+
   if (!req.body.email) {
     res.statusCode = 400;
     return res.send(`Error ${res.statusCode}: Cannot have empty email`);
@@ -216,19 +236,23 @@ app.post("/login", (req, res) => {
     return res.send(`Error ${res.statusCode}: Cannot have empty password`);
   }
 
+  // gets user from database using provided email
   let user = getUserByEmail(users, req.body.email);
 
+  // no user found
   if (!user) {
     res.statusCode = 403;
     return res.send(`Error ${res.statusCode}: Email not found`);
   }
 
+  // checks if password provided matches hashed password in database
   bcrypt.compare(req.body.password, user.password, (err, success) => {
     if (!success) {
       res.statusCode = 403;
       return res.send(`Error ${res.statusCode}: Incorrect password`);
     }
 
+    // password matches
     req.session.userID = user.userID;
     res.redirect("/urls");
 
@@ -239,6 +263,7 @@ app.post("/login", (req, res) => {
 
 // ---------- LOGOUT --------------------
 app.post("/logout", (req, res) => {
+  // clears cookie and redirects to login
   req.session = null;
   res.redirect("/login");
 });
